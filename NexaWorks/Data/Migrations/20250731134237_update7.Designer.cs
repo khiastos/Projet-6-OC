@@ -12,8 +12,8 @@ using NexaWorks.Data;
 namespace NexaWorks.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250731114903_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250731134237_update7")]
+    partial class update7
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,6 +34,7 @@ namespace NexaWorks.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -50,6 +51,7 @@ namespace NexaWorks.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -73,8 +75,6 @@ namespace NexaWorks.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
-
                     b.ToTable("ProductVersions");
                 });
 
@@ -96,11 +96,9 @@ namespace NexaWorks.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProductOperatingSystemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductVersionId")
-                        .HasColumnType("int");
+                    b.Property<string>("OperatingSystemName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateOnly>("ResolutionDate")
                         .HasColumnType("date");
@@ -108,43 +106,13 @@ namespace NexaWorks.Migrations
                     b.Property<string>("ResolutionDescription")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("VersionNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductOperatingSystemId");
-
-                    b.HasIndex("ProductVersionId");
-
                     b.ToTable("Tickets");
-                });
-
-            modelBuilder.Entity("NexaWorks.Models.Entities.ProductVersion", b =>
-                {
-                    b.HasOne("NexaWorks.Models.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("NexaWorks.Models.Entities.Ticket", b =>
-                {
-                    b.HasOne("NexaWorks.Models.Entities.ProductOperatingSystem", "ProductOperatingSystem")
-                        .WithMany()
-                        .HasForeignKey("ProductOperatingSystemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NexaWorks.Models.Entities.ProductVersion", "ProductVersion")
-                        .WithMany()
-                        .HasForeignKey("ProductVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductOperatingSystem");
-
-                    b.Navigation("ProductVersion");
                 });
 #pragma warning restore 612, 618
         }

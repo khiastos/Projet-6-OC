@@ -1,38 +1,34 @@
-﻿//using Microsoft.EntityFrameworkCore;
-//using NexaWorks.Models.Entities;
+﻿using NexaWorks.Models.Entities;
 
-//namespace NexaWorks.Data
-//{
-//    public class TicketDataSeed
-//    {
-//        public static void Seed(IServiceProvider services)
-//        {
-//            using var scope = services.CreateScope();
-//            var ctx = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+namespace NexaWorks.Data
+{
+    public class TicketDataSeed
+    {
+        public static void Seed(ApplicationDbContext context)
+        {
+            var productVersionMap = context.ProductVersions
+                .ToDictionary(version => (version.ProductId, version.VersionNumber), version => version);
 
-//            Applique les migrations
-//            ctx.Database.Migrate();
+            var operatingSystemMap = context.ProductOperatingSystems
+                .ToDictionary(os => os.Name, os => os);
 
-//            Si les tickets existent déjà, on sort
-//            if (ctx.Tickets.Any()) return;
+            if (!context.Tickets.Any())
+            {
+                context.Tickets.AddRange(
+                    new Ticket
+                    {
+                        CreationDate = DateOnly.Parse("2025-01-14"),
+                        ResolutionDate = DateOnly.Parse("2025-01-20"),
+                        IsResolved = true,
+                        IssueDescription = "Lors de l’ouverture de l'application, celle-ci se ferme immédiatement sans afficher de message d'erreur.",
+                        ResolutionDescription = "Identification d’un conflit avec la dernière mise à jour Android. Correction du bug par une mise à jour corrective (v1.3.1) de l’application.",
+                        OperatingSystemName = operatingSystemMap["Android"].Name,
+                        VersionNumber = productVersionMap[(1, 1.3f)].VersionNumber.ToString()
+                    }
 
-//            Prépare la liste de tickets
-//           var tickets = new List<Ticket>
-//           {
-//                new Ticket {
-//                    ProductVersionId     = 1,
-//                    OperatingSystemId    = 2,
-//                    CreationDate         = new DateTime(2025,1,14),
-//                    ResolutionDate       = new DateTime(2025,1,20),
-//                    Status               = "Resolved",
-//                    IssueDescription     = "Lors de l’ouverture de l'application, celle-ci se ferme immédiatement sans message.",
-//                    ResolutionDetails    = "Conflit détecté avec la dernière version Android ; correctif publié v1.3.1."
-//                },
-//                 … tes 24 autres tickets …
-//            };
-
-//            ctx.Tickets.AddRange(tickets);
-//            ctx.SaveChanges();
-//        }
-//    }
-//}
+                );
+            }
+            context.SaveChanges();
+        }
+    }
+}
