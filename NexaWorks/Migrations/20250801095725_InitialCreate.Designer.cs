@@ -12,8 +12,8 @@ using NexaWorks.Data;
 namespace NexaWorks.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250731134237_update7")]
-    partial class update7
+    [Migration("20250801095725_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -97,6 +97,10 @@ namespace NexaWorks.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OperatingSystemName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

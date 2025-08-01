@@ -11,8 +11,8 @@ namespace NexaWorks.Data
                 context.Products.AddRange(
                     new Product { Name = "Trader en Herbe" },
                     new Product { Name = "Maître des Investissements" },
-                    new Product { Name = "Plannificateur d'Entraînement" },
-                    new Product { Name = "Plannificateur d'Anxiété Sociale" }
+                    new Product { Name = "Planificateur d'Entraînement" },
+                    new Product { Name = "Planificateur d'Anxiété Sociale" }
                 );
             }
             context.SaveChanges();

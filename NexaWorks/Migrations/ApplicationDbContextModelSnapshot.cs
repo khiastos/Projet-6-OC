@@ -97,6 +97,10 @@ namespace NexaWorks.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateOnly>("ResolutionDate")
                         .HasColumnType("date");
 
