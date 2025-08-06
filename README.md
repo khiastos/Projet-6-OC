@@ -16,7 +16,7 @@ L'objectif était de se mettre à l'aise avec les **bases de données** et le la
 ## Le modèle entité-association
 
 <p align="center">
-<img width="335" height="419" alt="image" src="https://github.com/user-attachments/assets/0589f3eb-a240-4ade-9eeb-fc4c90a7f749" />
+<img width="600" height="700" alt="image" src="Modèle%20entité-association.png" />
 </p>
 
 ---
