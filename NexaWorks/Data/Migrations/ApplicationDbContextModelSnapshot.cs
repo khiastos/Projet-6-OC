@@ -39,6 +39,34 @@ namespace NexaWorks.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("NexaWorks.Models.Entities.ProductBuild", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OperatingSystemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductVersionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperatingSystemId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductVersionId");
+
+                    b.ToTable("ProductBuilds");
+                });
+
             modelBuilder.Entity("NexaWorks.Models.Entities.ProductOperatingSystem", b =>
                 {
                     b.Property<int>("Id")
@@ -64,11 +92,9 @@ namespace NexaWorks.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<float>("VersionNumber")
-                        .HasColumnType("real");
+                    b.Property<string>("VersionNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -93,13 +119,8 @@ namespace NexaWorks.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OperatingSystemName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ProductBuildId")
+                        .HasColumnType("int");
 
                     b.Property<DateOnly>("ResolutionDate")
                         .HasColumnType("date");
@@ -107,13 +128,49 @@ namespace NexaWorks.Migrations
                     b.Property<string>("ResolutionDescription")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("VersionNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
+                    b.HasIndex("ProductBuildId");
+
                     b.ToTable("Tickets");
+                });
+
+            modelBuilder.Entity("NexaWorks.Models.Entities.ProductBuild", b =>
+                {
+                    b.HasOne("NexaWorks.Models.Entities.ProductOperatingSystem", "OperatingSystem")
+                        .WithMany()
+                        .HasForeignKey("OperatingSystemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NexaWorks.Models.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NexaWorks.Models.Entities.ProductVersion", "VersionNumber")
+                        .WithMany()
+                        .HasForeignKey("ProductVersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OperatingSystem");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("VersionNumber");
+                });
+
+            modelBuilder.Entity("NexaWorks.Models.Entities.Ticket", b =>
+                {
+                    b.HasOne("NexaWorks.Models.Entities.ProductBuild", "ProductBuild")
+                        .WithMany()
+                        .HasForeignKey("ProductBuildId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductBuild");
                 });
 #pragma warning restore 612, 618
         }

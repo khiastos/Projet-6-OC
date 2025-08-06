@@ -3,7 +3,6 @@
     public class ProductVersion
     {
         public int Id { get; set; }
-        public float VersionNumber { get; set; }
-        public int ProductId { get; set; }
+        public required string VersionNumber { get; set; }
     }
 }

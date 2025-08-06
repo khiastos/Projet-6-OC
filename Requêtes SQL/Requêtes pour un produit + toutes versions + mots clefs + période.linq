@@ -19,24 +19,28 @@
 
 #nullable enable
 
-IQueryable<Tickets> Query (
+IQueryable<object> Query (
 	bool? isResolved, 
 	string product,
 	DateOnly? start,
 	DateOnly? end,
 	string[]? keywords = null)
 {
-	var q = Tickets.AsQueryable();
+	var q = Tickets
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.Product)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.ProductVersion)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.OperatingSystem)
+        .AsQueryable();
 	
 	if (isResolved.HasValue)
 	{
 		q = q.Where(t => t.IsResolved == isResolved.Value);
 	}
 	
-	if (!string.IsNullOrEmpty(product))
-	{
-		q = q.Where(t => t.ProductName == product);
-	}
+	q = q.Where(t => t.ProductBuild.Product.Name == product);
 	
 	if (start.HasValue && end.HasValue)
 	{
@@ -55,17 +59,28 @@ IQueryable<Tickets> Query (
 		);
 	}
 	
-return q;
+return q.Select(t => new
+    {
+        t.Id,
+        ProductName = t.ProductBuild.Product.Name,
+        VersionNumber = t.ProductBuild.ProductVersion.VersionNumber,
+        OperatingSystemName = t.ProductBuild.OperatingSystem.Name,
+        t.CreationDate,
+        ResolutionDate = t.ResolutionDate == default ? "/" : t.ResolutionDate.ToString(),
+        Statut = t.IsResolved ? "Résolu" : "En cours",
+        t.IssueDescription,
+        ResolutionDescription = string.IsNullOrEmpty(t.ResolutionDescription) ? "/" : t.ResolutionDescription
+    });
 }
 
 Query(false, "Planificateur d'Anxiété Sociale", null, null, new[] {"correctement"})
     .Dump("Problèmes en cours (par produit) + toutes les versions + mots clefs");
-
-Query(true, "Trader en Herbe", new DateOnly(2025,1,1), new DateOnly(2025,2,28), new[] {"erreur"})
-    .Dump("Problèmes résolus (par produit) + toutes les versions + mots clefs");
 	
 Query(null, "Maître des Investissements", null, null, new[] {"achats"})
-    .Dump("Tous les problèmes (par produit) + toutes les versions + mots clefs + période donnée");
+    .Dump("Tous les problèmes (par produit) + toutes les versions + mots clefs");
+
+Query(true, "Trader en Herbe", new DateOnly(2025,1,1), new DateOnly(2025,2,28), new[] {"erreur"})
+    .Dump("Problèmes résolus (par produit) + toutes les versions + mots clefs + période donnée");
 
 Query(true, "Planificateur d'Entraînement", new DateOnly(2025,6,1), new DateOnly(2025,8,28), new[] {"bug"})
     .Dump("Problèmes résolus (par produit) + toutes les versions + mots clefs + période donnée");

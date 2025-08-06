@@ -19,25 +19,29 @@
 
 #nullable enable
 
-IQueryable<Tickets> Query (
-	bool? isResolved, 
-	string product,
-	DateOnly? start,
-	DateOnly? end)
+IQueryable<object> Query(
+    bool? isResolved,
+    string product,
+    DateOnly? start,
+    DateOnly? end)
 {
-	var q = Tickets.AsQueryable();
-	
-	if (isResolved.HasValue)
-	{
-		q = q.Where(t => t.IsResolved == isResolved.Value);
-	}
-	
-	if (!string.IsNullOrEmpty(product))
-	{
-		q = q.Where(t => t.ProductName == product);
-	}
-	
-	if (start.HasValue && end.HasValue)
+    var q = Tickets
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.Product)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.ProductVersion)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.OperatingSystem)
+        .AsQueryable();
+		
+	q = q.Where(t => t.ProductBuild.Product.Name == product);
+
+    if (isResolved.HasValue)
+    {
+        q = q.Where(t => t.IsResolved == isResolved.Value);
+    }
+
+    if (start.HasValue && end.HasValue)
 	{
 		if (isResolved is false)
 			q = q.Where(t => t.CreationDate >= start.Value 
@@ -46,8 +50,19 @@ IQueryable<Tickets> Query (
 			q = q.Where(t => t.ResolutionDate >= start.Value 
 			&& t.ResolutionDate <= end.Value);
 	}
-	
-return q;
+
+    return q.Select(t => new
+    {
+        t.Id,
+        ProductName = t.ProductBuild.Product.Name,
+        VersionNumber = t.ProductBuild.ProductVersion.VersionNumber,
+        OperatingSystemName = t.ProductBuild.OperatingSystem.Name,
+        t.CreationDate,
+        t.ResolutionDate,
+        Statut = t.IsResolved ? "Résolu" : "En cours",
+        t.IssueDescription,
+        ResolutionDescription = string.IsNullOrEmpty(t.ResolutionDescription) ? "/" : t.ResolutionDescription
+    });
 }
 
 Query(false, "Planificateur d'Entraînement", null, null)

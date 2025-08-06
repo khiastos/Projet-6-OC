@@ -19,20 +19,40 @@
 
 #nullable enable
 
-IQueryable<Tickets> Query (
-	bool isResolved, 
-	string[]? keywords = null)
+IQueryable<object> Query(
+    bool isResolved,
+    string[]? keywords = null)
 {
-	var q = Tickets.Where(t => t.IsResolved == isResolved);
+    var q = Tickets
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.Product)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.ProductVersion)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.OperatingSystem)
+        .Where(t => t.IsResolved == isResolved);
 
-	if (keywords is not null && keywords.Length > 0)
-	{
-		q = q.Where(t =>
-		keywords.All(kw => ((string)t.IssueDescription).Contains(kw))
-		);
-	}
-return q;
+    if (keywords is not null && keywords.Length > 0)
+    {
+        q = q.Where(t =>
+            keywords.All(kw =>
+                t.IssueDescription != null && t.IssueDescription.Contains(kw)));
+    }
+
+    return q.Select(t => new
+    {
+        t.Id,
+        ProductName = t.ProductBuild.Product.Name,
+        VersionNumber = t.ProductBuild.ProductVersion.VersionNumber,
+        OperatingSystemName = t.ProductBuild.OperatingSystem.Name,
+        t.CreationDate,
+        ResolutionDate = t.ResolutionDate == default ? "/" : t.ResolutionDate.ToString(),
+        Statut = t.IsResolved ? "Résolu" : "En cours",
+        t.IssueDescription,
+        ResolutionDescription = string.IsNullOrEmpty(t.ResolutionDescription) ? "/" : t.ResolutionDescription
+    });
 }
+
 
 Query(false)
     .Dump("Problèmes en cours (tous produits)");

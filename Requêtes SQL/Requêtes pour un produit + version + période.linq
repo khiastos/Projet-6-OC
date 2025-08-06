@@ -19,49 +19,70 @@
 
 #nullable enable
 
-IQueryable<Tickets> Query (
-	bool? isResolved, 
-	string product,
-	string version,
-	DateOnly? start,
-	DateOnly? end)
+IQueryable<object> Query(
+    bool? isResolved,
+    string product,
+    string version,
+    DateOnly? start,
+    DateOnly? end)
 {
-	var q = Tickets.AsQueryable();
+    var q = Tickets
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.Product)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.ProductVersion)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.OperatingSystem)
+        .AsQueryable();
 	
-	if (isResolved.HasValue)
-	{
-		q = q.Where(t => t.IsResolved == isResolved.Value);
-	}
+	q = q.Where(t => t.ProductBuild.Product.Name == product);
 	
-	q = q.Where(t => (t.ProductName) == product);
-	
-	if (!string.IsNullOrEmpty(version))
-	{
-		q = q.Where(t => t.VersionNumber == version);
-	}
-	
-	if (start.HasValue && end.HasValue)
-	{
-		if (isResolved is false)
-			q = q.Where(t => t.CreationDate >= start.Value 
-			&& t.CreationDate <= end.Value);
-		else
-			q = q.Where(t => t.ResolutionDate >= start.Value 
-			&& t.ResolutionDate <= end.Value);
-	}
-	
-return q;
+    if (isResolved.HasValue)
+    {
+        q = q.Where(t => t.IsResolved == isResolved.Value);
+    }
+
+    if (!string.IsNullOrEmpty(version))
+    {
+        q = q.Where(t => t.ProductBuild.ProductVersion.VersionNumber == version);
+    }
+
+    if (start.HasValue && end.HasValue)
+    {
+        if (isResolved is false)
+        {
+            q = q.Where(t => t.CreationDate >= start.Value && t.CreationDate <= end.Value);
+        }
+        else
+        {
+            q = q.Where(t => t.ResolutionDate >= start.Value && t.ResolutionDate <= end.Value);
+        }
+    }
+
+    return q.Select(t => new
+    {
+        t.Id,
+        ProductName = t.ProductBuild.Product.Name,
+        VersionNumber = t.ProductBuild.ProductVersion.VersionNumber,
+        OperatingSystemName = t.ProductBuild.OperatingSystem.Name,
+        t.CreationDate,
+        ResolutionDate = t.ResolutionDate == default ? "/" : t.ResolutionDate.ToString(),
+        Statut = t.IsResolved ? "Résolu" : "En cours",
+        t.IssueDescription,
+        ResolutionDescription = string.IsNullOrEmpty(t.ResolutionDescription) ? "/" : t.ResolutionDescription
+    });
 }
 
-Query(false, "Trader en Herbe", "1,2", null, null)
+
+Query(false, "Trader en Herbe", "1.2", null, null)
     .Dump("Problèmes en cours (par produit) + une version");
 
-Query(true, "Maître des Investissements", "2", null, null)
+Query(true, "Maître des Investissements", "2.0", null, null)
     .Dump("Problèmes résolus (par produit) + une version");
 
-Query(null, "Planificateur d'Entraînement","1", new DateOnly(2025,1,1), new DateOnly(2025,8,30))
+Query(null, "Planificateur d'Entraînement","1.0", new DateOnly(2025,1,1), new DateOnly(2025,8,30))
     .Dump("Tous les problèmes (par produit) + une version + période donnée");
 
-Query(true, "Planificateur d'Anxiété Sociale","1", new DateOnly(2025,1,1), new DateOnly(2025,8,30))
+Query(true, "Planificateur d'Anxiété Sociale","1.0", new DateOnly(2025,1,1), new DateOnly(2025,8,30))
     .Dump("Problèmes résolus (par produit) + une version + période donnée");
 

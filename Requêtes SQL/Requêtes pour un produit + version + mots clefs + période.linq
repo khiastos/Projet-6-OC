@@ -19,7 +19,7 @@
 
 #nullable enable
 
-IQueryable<Tickets> Query (
+IQueryable<object> Query (
 	bool? isResolved, 
 	string product,
 	string version,
@@ -27,22 +27,25 @@ IQueryable<Tickets> Query (
 	DateOnly? end,
 	string[]? keywords = null)
 {
-	var q = Tickets.AsQueryable();
+	 var q = Tickets
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.Product)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.ProductVersion)
+        .Include(t => t.ProductBuild)
+            .ThenInclude(pb => pb.OperatingSystem)
+        .AsQueryable();
 	
 	if (isResolved.HasValue)
 	{
 		q = q.Where(t => t.IsResolved == isResolved.Value);
 	}
 	
-	if (!string.IsNullOrEmpty(product))
-	{
-		q = q.Where(t => t.ProductName == product);
-	}
+	q = q.Where(t => t.ProductBuild.Product.Name == product);
 	
-	if (!string.IsNullOrEmpty(version))
-	{
-		q = q.Where(t => t.VersionNumber == version);
-	}
+	q = q.Where(t => t.ProductBuild.ProductVersion.VersionNumber == version);
+	
+	q = q.Where(t =>keywords!.All(kw => ((string)t.IssueDescription).Contains(kw)));
 	
 	if (start.HasValue && end.HasValue)
 	{
@@ -54,26 +57,30 @@ IQueryable<Tickets> Query (
 			&& t.ResolutionDate <= end.Value);
 	}
 	
-	if (keywords is not null && keywords.Length > 0)
-	{
-		q = q.Where(t =>
-		keywords.All(kw => ((string)t.IssueDescription).Contains(kw))
-		);
-	}
-	
-return q;
+return q.Select(t => new
+    {
+        t.Id,
+        ProductName = t.ProductBuild.Product.Name,
+        VersionNumber = t.ProductBuild.ProductVersion.VersionNumber,
+        OperatingSystemName = t.ProductBuild.OperatingSystem.Name,
+        t.CreationDate,
+        ResolutionDate = t.ResolutionDate == default ? "/" : t.ResolutionDate.ToString(),
+        Statut = t.IsResolved ? "Résolu" : "En cours",
+        t.IssueDescription,
+        ResolutionDescription = string.IsNullOrEmpty(t.ResolutionDescription) ? "/" : t.ResolutionDescription
+    });
 }
 
-Query(true, "Planificateur d'Anxiété Sociale", "1", null, null, new[] {"utilisateur"})
+Query(true, "Planificateur d'Anxiété Sociale", "1.0", null, null, new[] {"utilisateur"})
     .Dump("Problèmes résolus (par produit) + version + mots clefs");
 
-Query(false, "Trader en Herbe","1", null, null, new[] {"transactions"})
+Query(false, "Trader en Herbe","1.0", null, null, new[] {"transactions"})
     .Dump("Problèmes en cours (par produit) + version + mots clefs");
 	
-Query(null, "Maître des Investissements", "2", new DateOnly(2025,1,1), new DateOnly(2025,8,30), new[] {"erreur"})
+Query(null, "Maître des Investissements", "2.0", new DateOnly(2025,1,1), new DateOnly(2025,8,30), new[] {"erreur"})
     .Dump("Tous les problèmes (par produit) + version + mots clefs + période donnée");
 
-Query(true, "Planificateur d'Entraînement", "1,1", new DateOnly(2025,7,1), new DateOnly(2025,8,1), new[] {"correctement"})
+Query(true, "Planificateur d'Entraînement", "1.1", new DateOnly(2025,7,1), new DateOnly(2025,8,1), new[] {"correctement"})
     .Dump("Problèmes résolus (par produit) + version + mots clefs + période donnée");
 
 

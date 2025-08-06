@@ -14,6 +14,7 @@ namespace NexaWorks.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<ProductVersion> ProductVersions { get; set; }
+        public DbSet<ProductBuild> ProductBuilds { get; set; }
 
     }
 }
